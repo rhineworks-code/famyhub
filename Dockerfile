@@ -24,7 +24,7 @@ ENV NODE_ENV=production \
     PUBLIC_DIR=/app/public
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends tini tzdata ca-certificates \
+ && apt-get install -y --no-install-recommends tini tzdata ca-certificates smbclient \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

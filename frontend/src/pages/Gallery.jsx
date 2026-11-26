@@ -34,7 +34,7 @@ const Albums = () => {
             ) : (
                 <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-4">
                     {data.map(a => (
-                        <Link key={a.id} to={`/gallery/${a.id}`} className="press block">
+                        <Link key={a.id} to={`/gallery/${a.id}`} className="press block min-w-0">
                             <div className="aspect-square overflow-hidden rounded-card bg-fill/15">
                                 {a.cover_photo
                                     ? <img src={uploadUrl(a.cover_photo)} alt="" loading="lazy" className="h-full w-full object-cover" />

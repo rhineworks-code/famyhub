@@ -118,7 +118,7 @@ const List = () => {
                         const pr = progress(p);
                         const dl = deadlineInfo(p);
                         return (
-                            <Link key={p.id} to={`/projects/${p.id}`} className="press block rounded-card bg-card p-4">
+                            <Link key={p.id} to={`/projects/${p.id}`} className="press block min-w-0 rounded-card bg-card p-4">
                                 <div className="flex items-start gap-3">
                                     <div className="min-w-0 flex-1">
                                         <h2 className="truncate text-headline font-semibold">{p.title}</h2>
@@ -199,7 +199,7 @@ const Detail = () => {
     return (
         <Page back="/projects" title={p.title} actions={<IconButton icon="ri-more-fill" label="Optionen" variant="gray" onClick={() => setMenu(true)} />}>
             <section className="mb-6 rounded-card bg-card p-4">
-                {p.description && <p className="mb-3 whitespace-pre-wrap text-body text-label2">{p.description}</p>}
+                {p.description && <p className="mb-3 whitespace-pre-wrap break-words text-body text-label2 [overflow-wrap:anywhere]">{p.description}</p>}
                 <div className="flex items-center gap-3">
                     <div className="relative h-14 w-14 shrink-0">
                         <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90"><circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="4" className="stroke-fill/20" /><circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="4" stroke="#007AFF" strokeLinecap="round" strokeDasharray={`${pr.pct * 0.974} 100`} /></svg>
@@ -224,8 +224,8 @@ const Detail = () => {
                     <div key={t.id} className="group/row flex items-center gap-3 pl-4">
                         <Check checked={!!t.completed} onChange={() => toggleTodo(t)} color="#007AFF" label={t.task} />
                         <div className="flex min-h-[48px] flex-1 items-center gap-2 border-b hairline pr-2 group-last/row:border-b-0">
-                            <span className={cx('flex-1 py-3 text-body', t.completed && 'text-label3 line-through')}>{t.task}</span>
-                            {t.urgency === 'urgent' && !t.completed && <span className="rounded-full bg-danger/12 px-2 py-0.5 text-caption font-semibold text-danger">Dringend</span>}
+                            <span className={cx('min-w-0 flex-1 py-3 text-body [overflow-wrap:anywhere]', t.completed && 'text-label3 line-through')}>{t.task}</span>
+                            {t.urgency === 'urgent' && !t.completed && <span className="shrink-0 rounded-full bg-danger/12 px-2 py-0.5 text-caption font-semibold text-danger">Dringend</span>}
                             <IconButton icon="ri-close-line" label="Löschen" variant="plain" className="text-label3" size={32} onClick={() => delTodo(t)} />
                         </div>
                     </div>
@@ -239,7 +239,7 @@ const Detail = () => {
                         <Check checked={!!m.completed} onChange={() => toggleMs(m)} color="#FF9500" label={m.title} />
                         <button onClick={() => setMs({ ...m, due_date: m.due_date || '' })} className="flex min-h-[52px] flex-1 items-center gap-2 border-b hairline pr-4 text-left group-last/row:border-b-0">
                             <span className="min-w-0 flex-1 py-2.5">
-                                <span className={cx('block text-body', m.completed && 'text-label3 line-through')}>{m.title}</span>
+                                <span className={cx('block text-body [overflow-wrap:anywhere]', m.completed && 'text-label3 line-through')}>{m.title}</span>
                                 {m.due_date && <span className="block text-footnote text-label2">{fmtDate(m.due_date)}</span>}
                             </span>
                             <i className="ri-arrow-right-s-line text-[22px] text-label3"></i>

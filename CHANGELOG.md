@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1 – NAS-Speicher, PDF-Anzeige, Feinschliff
+
+- **Dokumente auf dem NAS (SMB):** Unter Dokumente → Speicherort (Server-Symbol) oder Einstellungen → System lässt sich eine Netzwerkfreigabe einbinden, z. B. `dokumente/famyhub` auf der Synology. Fehlende Ordner werden angelegt. „Speichern“ prüft vorher mit einem echten Schreibtest. Bereits vorhandene Dokumente lassen sich per Knopfdruck auf das NAS verschieben und auch wieder zurückholen.
+- **Behoben:** Die bisherige SMB-Anbindung konnte nie funktionieren. Die verwendete Bibliothek nutzte das veraltete NTLMv1 mit DES, das Node 22 nicht mehr kann, und jeder Verbindungsversuch brachte den Server zum Absturz. Jetzt wird `smbclient` (Samba, SMB 2/3, NTLMv2) verwendet. Es ist im Docker-Image enthalten.
+- **PDFs werden angezeigt:** Handy-Browser können PDFs nicht in einem eingebetteten Rahmen darstellen. Die Vorschau zeichnet die Seiten jetzt mit PDF.js selbst, dazu gibt es eine Vollbild-Ansicht.
+- **Übersicht:** Neuer Kopfbereich mit Begrüßung, Datum, Wetter, eigenem Status und Kurzinfos: nächster Termin, Essen, offene Aufgaben, Einkauf.
+- **Behoben:** Lange Projektnamen, Links oder Aufgaben machten die Seite breiter als den Bildschirm, wodurch auch die untere Leiste verrutschte. Außerdem zoomte das iPhone beim Antippen kleiner Eingabefelder hinein.
+
 ## 3.0.0 – Komplett neue Oberfläche
 
 Die App-Oberfläche wurde von Grund auf neu geschrieben. Backend, Datenbank und alle Daten bleiben unverändert.

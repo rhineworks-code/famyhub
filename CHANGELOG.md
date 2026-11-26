@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.0.0 – Komplett neue Oberfläche
+
+Die App-Oberfläche wurde von Grund auf neu geschrieben. Backend, Datenbank und alle Daten bleiben unverändert.
+
+- **Ein einheitliches Bedienkonzept** in allen 17 Modulen: große Titel, gruppierte Listen, Bearbeiten immer im selben Blatt (unten auf dem Handy, als Fenster auf Tablet/PC), „Sichern“ oben rechts, Löschen immer unten in Rot mit Rückfrage.
+- **Eigener Komponentenbaukasten** statt hunderter Einzel-Styles: Listenzeilen, Schalter, Segment-Umschalter, Aktionsblätter, Hinweise und Bestätigungen sehen überall gleich aus und reagieren gleich.
+- **Übersicht:** Wetter, Familie mit Status, Termine, Essen heute, Aufgaben (direkt abhakbar), Einkauf und Chat. Unter „Anpassen“ ein- und ausblendbar.
+- **Kalender:** Monatsansicht mit Tagesliste und eine Listenansicht für 90 Tage. Termine, Geburtstage, Serien, Person und Farbe. Abonnierte iCal-Kalender und der Abo-Link für das Handy sind direkt im Kalender einstellbar.
+- **Einkauf:** Mehrere Artikel auf einmal (mit Komma getrennt), Kategorien, Erledigtes eingeklappt.
+- **Essensplan:** Wochenraster, mehrere Vorschläge pro Mahlzeit mit Abstimmung, Rezept-Vorschläge beim Tippen, Zutaten mit einem Tipp auf die Einkaufsliste.
+- **Rezepte** mit Portionsrechner, **Projekte** mit Fortschrittsring, **Urlaub** mit Countdown und Packliste, **Verträge** mit Kündigungsfristen und Kosten pro Person.
+- **Tresor:** Sperrt sich nach 5 Minuten ohne Bedienung automatisch. Passwort-Generator und Stärkeanzeige. Import und Export im Bitwarden-Format. Die Verschlüsselung ist unverändert, alle bisherigen Einträge bleiben lesbar.
+- **Einstellungen** wie auf dem iPhone: Profil, Sicherheit (Passwort, 2FA), Darstellung (Hell/Dunkel/Automatisch, Module sortieren und ausblenden), Mitteilungen, Familie (Mitglieder, Rechte pro Modul, Mitteilungen pro Person, Einladungscode teilen) und System.
+- **Einladungslink:** `https://…/?invite=CODE` öffnet direkt die Registrierung mit eingetragenem Code.
+- **Behoben (Server):** Konnte die Texterkennung (OCR) ihre Sprachdaten nicht laden, stürzte der ganze Server beim Hochladen eines Fotos ab. Jetzt gibt es einen gemeinsamen OCR-Worker mit Zeitlimit. Die Sprachdaten werden in `data/tessdata` zwischengespeichert.
+- Entfernt: die ungenutzte „App-PIN“ im Profil. Sie wurde nirgends abgefragt.
+
 ## 2.1.0 – Neues Design im iOS-Stil
 
 - **Neue Optik in allen Modulen:** iOS-Graustufen, weiße Karten ohne dicke Rahmen, ruhigere Schrift (Systemschrift bzw. Inter, im Container mitgeliefert, keine Google-Fonts-Anfrage), weichere Schatten und keine bunten Verläufe mehr.

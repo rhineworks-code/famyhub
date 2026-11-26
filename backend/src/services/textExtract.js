@@ -1,6 +1,14 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
+const config = require('../config');
+
+const OCR_TIMEOUT_MS = Number(process.env.OCR_TIMEOUT_MS) || 90_000;
+const withTimeout = (promise, ms, label) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}: Zeitüberschreitung`)), ms)),
+]);
 
 /**
  * Text extraction for uploaded documents.
@@ -26,21 +34,44 @@ const extractPdfText = async (buffer) => {
     return '';
 };
 
+/**
+ * One shared OCR worker for the whole process (starting one per image is slow and,
+ * when the language data cannot be downloaded, every attempt left a hanging thread).
+ * After a failed start we wait 10 minutes before trying again.
+ */
+let workerPromise = null;
+let workerFailedAt = 0;
+const RETRY_AFTER_MS = 10 * 60 * 1000;
+
+const getWorker = () => {
+    if (workerPromise) return workerPromise;
+    if (workerFailedAt && Date.now() - workerFailedAt < RETRY_AFTER_MS) return Promise.reject(new Error('OCR ist vorübergehend nicht verfügbar'));
+    const Tesseract = require('tesseract.js');
+    // errorHandler is essential: without it tesseract.js throws worker errors (e.g. when the
+    // language data cannot be downloaded) asynchronously and the whole server process crashes.
+    workerPromise = withTimeout(Tesseract.createWorker(['deu', 'eng'], 1, {
+        cachePath: path.join(config.dataDir, 'tessdata'),
+        errorHandler: (err) => console.warn('[ocr] Worker-Fehler:', err?.message || err),
+    }), OCR_TIMEOUT_MS, 'OCR-Start').catch((err) => {
+        workerPromise = null;
+        workerFailedAt = Date.now();
+        throw err;
+    });
+    return workerPromise;
+};
+
 const extractImageText = async (filePath) => {
     const sharp = require('sharp');
-    const Tesseract = require('tesseract.js');
     const processed = `${filePath}-ocr.png`;
-    let worker;
     try {
         await sharp(filePath).rotate().resize({ width: 2200, fit: 'inside', withoutEnlargement: true }).grayscale().normalize().toFile(processed);
-        worker = await Tesseract.createWorker(['deu', 'eng']);
-        const { data } = await worker.recognize(processed);
+        const worker = await getWorker();
+        const { data } = await withTimeout(worker.recognize(processed), OCR_TIMEOUT_MS, 'OCR');
         return (data?.text || '').trim();
     } catch (err) {
-        console.warn('[ocr] Bild-OCR auf dem Server fehlgeschlagen (Browser-OCR wird verwendet):', err.message);
+        console.warn('[ocr] Bild-OCR fehlgeschlagen:', err.message);
         return '';
     } finally {
-        if (worker) await worker.terminate().catch(() => {});
         fs.promises.unlink(processed).catch(() => {});
     }
 };

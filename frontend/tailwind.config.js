@@ -1,50 +1,54 @@
 /** @type {import('tailwindcss').Config} */
 
-// iOS-like neutral scale. The whole app uses Tailwind's "slate" classes, so
-// redefining that scale gives every module the Apple grays at once
-// (light: grouped gray background + white cards, dark: black + #1C1C1E cards).
-const iosGray = {
-    50: '#F2F2F7',
-    100: '#E9E9EE',
-    200: '#D9D9DE',
-    300: '#C7C7CC',
-    400: '#86868B',
-    500: '#76767B',
-    600: '#545458',
-    700: '#38383A',
-    800: '#1C1C1E',
-    900: '#111113',
-    950: '#000000',
-};
+// Semantic iOS-style colors. Each one is a CSS variable (see index.css) that
+// switches between light and dark mode – components never need "dark:" variants.
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
     darkMode: 'class',
-    content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+    content: ['./index.html', './src/**/*.{js,jsx}'],
     theme: {
         extend: {
             colors: {
-                slate: iosGray,
-                brand: {
-                    dark: '#2B3E6A',
-                    light: '#1AA7EC',
-                },
+                bg: v('bg'),            // grouped background
+                card: v('card'),        // cells / cards
+                card2: v('card2'),      // elevated / inset on cards
+                fill: v('fill'),        // tinted control fill (segmented, search)
+                label: v('label'),      // primary text
+                label2: v('label2'),    // secondary text
+                label3: v('label3'),    // tertiary / placeholder
+                sep: v('sep'),          // hairlines
+                accent: v('accent'),    // tint for text, icons, links
+                tint: v('tint'),        // filled buttons
+                navy: '#2B3E6A',
+                sky: '#1AA7EC',
+                ok: '#10B981',
+                warn: '#F59E0B',
+                danger: v('danger'),
             },
             fontFamily: {
                 sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
-                outfit: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
+            },
+            fontSize: {
+                caption: ['12px', '16px'],
+                footnote: ['13px', '18px'],
+                sub: ['15px', '20px'],
+                body: ['17px', '22px'],
+                headline: ['17px', '22px'],
+                title3: ['20px', '25px'],
+                title2: ['22px', '28px'],
+                title1: ['28px', '34px'],
+                large: ['34px', '41px'],
             },
             borderRadius: {
-                lg: '0.75rem',
-                xl: '1rem',
-                '2xl': '1.25rem',
-                '3xl': '1.5rem',
+                cell: '12px',
+                card: '18px',
+                sheet: '22px',
             },
+            opacity: { 8: '0.08', 12: '0.12', 18: '0.18', 35: '0.35', 45: '0.45' },
             boxShadow: {
-                sm: '0 1px 2px rgba(0,0,0,0.04)',
-                md: '0 2px 8px rgba(0,0,0,0.06)',
-                lg: '0 6px 18px rgba(0,0,0,0.08)',
-                xl: '0 10px 30px rgba(0,0,0,0.10)',
-                '2xl': '0 20px 50px rgba(0,0,0,0.18)',
+                pop: '0 10px 40px rgba(0,0,0,0.18)',
+                soft: '0 1px 3px rgba(0,0,0,0.06)',
             },
         },
     },

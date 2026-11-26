@@ -1,8 +1,8 @@
-# FamyHub 2.0
+# FamyHub 3.0
 
 Selbst gehosteter Familienplaner: Kalender, Einkaufslisten, Essensplan, Rezepte, Chat, Galerie, Dokumente mit Texterkennung, Passwort-Tresor, Verträge, Taschengeld, Aufgaben mit Punkten, Projekte, Urlaubsplanung, Wunschlisten, Timeline und Push-Benachrichtigungen.
 
-Version 2.0 ist ein aufgeräumter und abgesicherter Umbau der bisherigen App. Bedienung und Funktionen bleiben gleich, die bestehende Datenbank wird beim ersten Start automatisch übernommen.
+Version 3.0 bringt eine komplett neu gebaute Oberfläche im iOS-Stil (Hell, Dunkel oder automatisch) für Handy, Tablet und PC. Die bestehende Datenbank wird beim ersten Start automatisch übernommen. Alle Daten bleiben erhalten.
 
 ---
 

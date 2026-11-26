@@ -1,7 +1,8 @@
 import React from 'react';
 import api from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { Page, Section, Row, FormGroup, InputRow, Segmented, Button, Sheet, Field, Spinner, useFeedback, useAction } from '../../ui';
+import { Page, Section, Row, FormGroup, InputRow, Button, Sheet, Field, Spinner, useFeedback, useAction } from '../../ui';
+import StorageSettings from '../../components/StorageSettings';
 
 const bytes = (n) => {
     if (!n) return '0 B';
@@ -29,48 +30,6 @@ const Smtp = () => {
                 <InputRow label="Absender" placeholder="FamyHub <noreply@…>" value={f.from || ''} onChange={set('from')} />
             </FormGroup>
             <Button variant="tinted" full loading={busy} onClick={save}>Speichern</Button>
-        </div>
-    );
-};
-
-const Storage = () => {
-    const [info, setInfo] = React.useState(null);
-    const [f, setF] = React.useState(null);
-    const [busy, setBusy] = React.useState('');
-    const { toast } = useFeedback();
-    const act = useAction();
-    const load = () => api.get('/documents/storage-info').then(r => { setInfo(r.data); setF({ type: r.data.type, path: r.data.path, smb_host: r.data.smb_host, smb_share: r.data.smb_share, smb_user: r.data.smb_user, smb_port: r.data.smb_port, smb_pass: '' }); }).catch(() => {});
-    React.useEffect(() => { load(); }, []);
-    if (!f) return null;
-    const set = (k) => (e) => setF(s => ({ ...s, [k]: e.target.value }));
-    const test = async () => {
-        setBusy('test');
-        const r = await act(() => api.post('/documents/storage-path', { ...f, test: true }));
-        setBusy('');
-        if (r?.data) toast(r.data.message || (r.data.ok ? 'Verbindung erfolgreich' : 'Verbindung fehlgeschlagen'), r.data.ok ? 'ok' : 'error');
-    };
-    const save = async () => { setBusy('save'); if (await act(() => api.post('/documents/storage-path', f), 'Speicherort gespeichert')) load(); setBusy(''); };
-    return (
-        <div className="mb-7 space-y-3">
-            <FormGroup title="Speicherort für Dokumente" footer={info ? `Aktuell: ${info.type === 'smb' ? `NAS //${info.smb_host}/${info.smb_share}` : info.path} · ${info.writable ? 'beschreibbar ✓' : 'nicht beschreibbar ✗'}` : undefined}>
-                <div className="px-4 py-3"><Segmented value={f.type} onChange={(v) => setF(s => ({ ...s, type: v }))} options={[{ value: 'local', label: 'Lokal' }, { value: 'smb', label: 'NAS (SMB)' }]} /></div>
-                {f.type === 'local' ? (
-                    <InputRow label="Pfad" autoCapitalize="none" value={f.path || ''} onChange={set('path')} />
-                ) : (
-                    <>
-                        <InputRow label="Server" placeholder="192.168.1.10" autoCapitalize="none" value={f.smb_host || ''} onChange={set('smb_host')} />
-                        <InputRow label="Freigabe" placeholder="dokumente" autoCapitalize="none" value={f.smb_share || ''} onChange={set('smb_share')} />
-                        <InputRow label="Benutzer" autoCapitalize="none" value={f.smb_user || ''} onChange={set('smb_user')} />
-                        <InputRow label="Passwort" type="password" autoComplete="new-password" placeholder="unverändert" value={f.smb_pass || ''} onChange={set('smb_pass')} />
-                        <InputRow label="Port" inputMode="numeric" value={f.smb_port || ''} onChange={set('smb_port')} />
-                    </>
-                )}
-            </FormGroup>
-            <div className="grid grid-cols-2 gap-3">
-                <Button variant="gray" loading={busy === 'test'} onClick={test}>Testen</Button>
-                <Button variant="tinted" loading={busy === 'save'} onClick={save}>Speichern</Button>
-            </div>
-            <p className="px-4 text-footnote text-label2">Bestehende Dokumente bleiben an ihrem bisherigen Ort und werden weiter gefunden.</p>
         </div>
     );
 };
@@ -105,7 +64,7 @@ export default function System() {
     return (
         <Page back="/settings" title="System">
             <Smtp />
-            {systemAdmin && <Storage />}
+            {systemAdmin && <div className="mb-7"><p className="mb-1.5 px-4 text-footnote font-semibold uppercase tracking-wide text-label2">Speicherort für Dokumente</p><StorageSettings /></div>}
             {stats === undefined && <div className="flex justify-center py-6 text-label3"><Spinner /></div>}
             {systemAdmin && stats && (
                 <Section title="Server">

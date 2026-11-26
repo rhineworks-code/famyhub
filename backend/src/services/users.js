@@ -70,6 +70,7 @@ const toPublicUser = async (row) => ({
     time_offset: row.time_offset || 0,
     mood_emoji: row.mood_emoji || null,
     mood_text: row.mood_text || null,
+    is_system_admin: await isSystemAdmin(row),
 });
 
 const signSession = (row, rememberMe = false) => {

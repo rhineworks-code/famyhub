@@ -1,8 +1,8 @@
 {
   "name": "famyhub-backend",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
-  "description": "FamyHub \u2013 Familienplaner Backend",
+  "description": "FamyHub – Familienplaner Backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -30,7 +30,6 @@
     "pdf-parse": "^2.4.5",
     "qrcode": "^1.5.4",
     "sharp": "^0.34.5",
-    "smb2": "0.2.11",
     "sqlite3": "^5.1.7",
     "tesseract.js": "^7.0.0",
     "web-push": "^3.6.7"

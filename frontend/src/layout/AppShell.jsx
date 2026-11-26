@@ -99,7 +99,7 @@ export default function AppShell() {
     return (
         <div className="flex min-h-dvh bg-bg text-label">
             <Sidebar features={features} />
-            <main ref={mainRef} className={cx('min-w-0 flex-1', fullBleed ? '' : 'safe-top px-4 pb-[calc(env(safe-area-inset-bottom)+84px)] pt-4 md:px-8 md:pb-10 md:pt-8')}>
+            <main ref={mainRef} className={cx('min-w-0 flex-1 overflow-x-clip', fullBleed ? '' : 'safe-top px-4 pb-[calc(env(safe-area-inset-bottom)+84px)] pt-4 md:px-8 md:pb-10 md:pt-8')}>
                 <Outlet />
             </main>
             <TabBar features={features} onMore={() => setMore(true)} moreActive={!inTabs} />

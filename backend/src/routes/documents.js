@@ -84,7 +84,8 @@ router.get('/file/:filename', authenticate({ allowQuery: true }), requireFamily,
         }
     }
 
-    const dirs = [localDirFor(doc.storage_path), DEFAULT_DIR, TEMP_DIR];
+    // Older versions stored absolute paths of their own container – fall back to the known folders.
+    const dirs = [localDirFor(doc.storage_path), DEFAULT_DIR, TEMP_DIR, config.uploadsDir];
     for (const dir of dirs) {
         const p = path.join(dir, filename);
         if (fs.existsSync(p)) return res.sendFile(p);
@@ -141,14 +142,16 @@ router.get('/', async (req, res) => {
 
 // --- Storage settings (global, system admin) -----------------------------------
 router.get('/storage-info', async (req, res) => {
-    const s = await settings.getMany(['docs_storage_type', 'docs_storage_path', 'smb_host', 'smb_share', 'smb_user', 'smb_port']);
+    const s = await settings.getMany(['docs_storage_type', 'docs_storage_path', 'smb_host', 'smb_share', 'smb_user', 'smb_port', 'smb_domain', 'smb_pass']);
     const type = s.docs_storage_type === 'smb' ? 'smb' : 'local';
     const p = trimOrNull(s.docs_storage_path) || DEFAULT_DIR;
     const info = {
         type, path: p, isDefault: p === DEFAULT_DIR,
-        smb_host: s.smb_host || '', smb_share: s.smb_share || '', smb_user: s.smb_user || '', smb_port: s.smb_port || '445',
+        smb_host: s.smb_host || '', smb_share: s.smb_share || '', smb_user: s.smb_user || '', smb_port: s.smb_port || '445', smb_domain: s.smb_domain || '', smb_has_password: !!s.smb_pass,
         exists: false, writable: false,
     };
+    const counts = req.user.role !== 'admin' ? [] : await db.all("SELECT CASE WHEN storage_path = 'smb' THEN 'smb' ELSE 'local' END AS loc, COUNT(*) AS n FROM documents GROUP BY loc");
+    info.counts = Object.fromEntries(counts.map(c => [c.loc, c.n]));
     if (type === 'smb') {
         info.exists = info.writable = await smb.isConfigured();
     } else {
@@ -159,7 +162,7 @@ router.get('/storage-info', async (req, res) => {
 });
 
 router.post('/storage-path', requireAdmin, requireSystemAdmin, async (req, res) => {
-    const { type, path: newPath, smb_host: host, smb_share: share, smb_user: user, smb_pass: pass, smb_port: port, test } = req.body;
+    const { type, path: newPath, smb_host: host, smb_share: share, smb_user: user, smb_pass: pass, smb_port: port, smb_domain: domain, test } = req.body;
 
     let localPath = trimOrNull(newPath) || DEFAULT_DIR;
     if (type !== 'smb') {
@@ -174,7 +177,7 @@ router.post('/storage-path', requireAdmin, requireSystemAdmin, async (req, res) 
     if (test) {
         if (type === 'smb') {
             const saved = await settings.getMany(['smb_pass']);
-            return res.json(await smb.testConnection({ smb_host: host, smb_share: share, smb_user: user, smb_pass: pass || saved.smb_pass, smb_port: port }));
+            return res.json(await smb.testConnection({ smb_host: trimOrNull(host), smb_share: trimOrNull(share), smb_user: trimOrNull(user), smb_pass: pass || saved.smb_pass, smb_port: port, smb_domain: trimOrNull(domain) }));
         }
         try {
             await fs.promises.mkdir(localPath, { recursive: true });
@@ -191,11 +194,47 @@ router.post('/storage-path', requireAdmin, requireSystemAdmin, async (req, res) 
     await settings.set('smb_share', trimOrNull(share) || '');
     await settings.set('smb_user', trimOrNull(user) || '');
     await settings.set('smb_port', trimOrNull(port) || '445');
+    await settings.set('smb_domain', trimOrNull(domain) || '');
     if (pass) await settings.set('smb_pass', pass);
     res.json({ message: 'Speichereinstellungen gespeichert' });
 });
 
 // --- Upload --------------------------------------------------------------------
+/**
+ * Moves all existing documents to the currently configured storage (NAS ⇄ local).
+ * Files that cannot be found are reported, the database entry stays untouched.
+ */
+router.post('/storage/migrate', requireAdmin, requireSystemAdmin, async (req, res) => {
+    const storage = await getStorage();
+    const docs = storage.type === 'smb'
+        ? await db.all("SELECT id, filename, storage_path FROM documents WHERE COALESCE(storage_path, '') != 'smb'")
+        : await db.all("SELECT id, filename, storage_path FROM documents WHERE storage_path = 'smb'");
+    const result = { total: docs.length, moved: 0, missing: 0, failed: 0, errors: [] };
+    for (const doc of docs) {
+        const name = path.basename(doc.filename);
+        try {
+            if (storage.type === 'smb') {
+                const source = [localDirFor(doc.storage_path), DEFAULT_DIR, TEMP_DIR].map(d => path.join(d, name)).find(p => fs.existsSync(p));
+                if (!source) { result.missing += 1; continue; }
+                await smb.writeFile(name, await fs.promises.readFile(source));
+                await db.run("UPDATE documents SET storage_path = 'smb' WHERE id = ?", [doc.id]);
+                await fs.promises.unlink(source).catch(() => {});
+            } else {
+                const data = await smb.readFile(name);
+                await fs.promises.mkdir(storage.path, { recursive: true });
+                await fs.promises.writeFile(path.join(storage.path, name), data);
+                await db.run('UPDATE documents SET storage_path = ? WHERE id = ?', [storage.path, doc.id]);
+                await smb.unlink(name).catch(() => {});
+            }
+            result.moved += 1;
+        } catch (err) {
+            result.failed += 1;
+            if (result.errors.length < 5) result.errors.push(`${name}: ${err.message}`);
+        }
+    }
+    res.json({ ...result, message: `${result.moved} von ${result.total} Dokumenten verschoben${result.missing ? `, ${result.missing} Dateien fehlten` : ''}${result.failed ? `, ${result.failed} Fehler` : ''}.` });
+});
+
 router.post('/', upload.single('file'), async (req, res) => {
     if (!req.file) throw new HttpError(400, 'Keine Datei hochgeladen');
     const tempPath = req.file.path;

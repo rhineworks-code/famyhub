@@ -241,6 +241,65 @@ const ChatWidget = ({ w }) => {
     );
 };
 
+const Hero = ({ onEdit }) => {
+    const { user } = useAuth();
+    const [mood, setMood] = React.useState(false);
+    const today = ymd(new Date());
+    const coords = (() => { try { return JSON.parse(localStorage.getItem('fh_coords')); } catch { return null; } })();
+    const { data: weather } = useApi(`/weather${coords ? `?lat=${coords.lat}&lon=${coords.lon}` : ''}`);
+    const { data: events } = useApi(can(user, 'calendar') ? '/calendar' : null, { initial: [], enabled: can(user, 'calendar') });
+    const { data: chores } = useApi(can(user, 'chores') ? '/chores' : null, { initial: { chores: [] }, enabled: can(user, 'chores') });
+    const { data: items } = useApi(can(user, 'shopping') ? '/shopping' : null, { initial: [], enabled: can(user, 'shopping') });
+    const { data: meals } = useApi(can(user, 'meals') ? `/meals?startDate=${today}&endDate=${today}` : null, { initial: [], enabled: can(user, 'meals') });
+
+    const now = new Date();
+    const todayEvents = events.filter(e => { const s = toDate(e.start); const en = toDate(e.end) || s; return ymd(s) <= today && ymd(en) >= today; });
+    const nextEvent = todayEvents.filter(e => !e.allDay && toDate(e.start) > now).sort((a, b) => toDate(a.start) - toDate(b.start))[0];
+    const openChores = (chores.chores || []).filter(c => !c.completed_today && (!c.assigned_to || c.assigned_to === user.id)).length;
+    const openItems = items.filter(i => !i.completed).length;
+    const dinner = meals.filter(m => m.meal_type === (now.getHours() < 14 ? 'Mittagessen' : 'Abendessen')).sort((a, b) => b.vote_count - a.vote_count)[0];
+
+    const pills = [
+        can(user, 'calendar') && { to: '/calendar', icon: 'ri-calendar-2-line', text: nextEvent ? `${fmtTime(nextEvent.start)} ${nextEvent.title}` : todayEvents.length ? `${todayEvents.length} ${todayEvents.length === 1 ? 'Termin' : 'Termine'} heute` : 'Keine Termine heute' },
+        can(user, 'meals') && dinner && { to: '/meals', icon: 'ri-restaurant-line', text: dinner.recipe_name },
+        can(user, 'chores') && { to: '/chores', icon: 'ri-task-line', text: openChores ? `${openChores} ${openChores === 1 ? 'Aufgabe' : 'Aufgaben'} offen` : 'Alles erledigt' },
+        can(user, 'shopping') && openItems > 0 && { to: '/shopping', icon: 'ri-shopping-cart-2-line', text: `${openItems} auf der Liste` },
+    ].filter(Boolean);
+    const w = weather?.current ? weatherInfo(weather.current.weather_code, weather.current.is_day) : null;
+
+    return (
+        <section className="relative mb-4 overflow-hidden rounded-sheet bg-[#2B3E6A] p-5 text-white shadow-pop md:p-7">
+            <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#1AA7EC] opacity-35 blur-3xl" />
+            <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 left-10 h-56 w-56 rounded-full bg-[#5B7BD5] opacity-25 blur-3xl" />
+            <div className="relative flex items-start gap-4">
+                <button onClick={() => setMood(true)} className="press relative shrink-0" aria-label="Status setzen">
+                    <Avatar user={user} size={56} className="ring-2 ring-white/40" />
+                    <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm text-[#2B3E6A] shadow-soft">{user.mood_emoji || <i className="ri-emotion-line"></i>}</span>
+                </button>
+                <div className="min-w-0 flex-1">
+                    <p className="text-footnote font-medium text-white/70">{fmt(now, 'EEEE, d. MMMM')}</p>
+                    <h1 className="text-title2 font-bold leading-tight sm:text-title1 md:text-large">{greeting()}, {user.username}</h1>
+                    {user.mood_text && <p className="mt-0.5 truncate text-sub text-white/80">{user.mood_text}</p>}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                    <button onClick={onEdit} className="press flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-lg" aria-label="Übersicht anpassen" title="Übersicht anpassen"><i className="ri-equalizer-line"></i></button>
+                    {w && <div className="flex items-center gap-1 text-title3 font-semibold"><i className={w[0]}></i>{Math.round(weather.current.temperature_2m)}°</div>}
+                </div>
+            </div>
+            {pills.length > 0 && (
+                <div className="relative mt-5 flex flex-wrap gap-2">
+                    {pills.map(p => (
+                        <Link key={p.to} to={p.to} className="press flex max-w-full items-center gap-1.5 rounded-full bg-white/12 px-3 py-1.5 text-footnote font-medium backdrop-blur">
+                            <i className={p.icon}></i><span className="truncate">{p.text}</span>
+                        </Link>
+                    ))}
+                </div>
+            )}
+            <MoodSheet open={mood} onClose={() => setMood(false)} />
+        </section>
+    );
+};
+
 const COMPONENTS = { family: FamilyWidget, events: EventsWidget, meals: MealsWidget, chores: ChoresWidget, shopping: ShoppingWidget, chat: ChatWidget };
 
 const enabledWidgets = (user) => {
@@ -265,13 +324,7 @@ export default function Dashboard() {
 
     return (
         <div className="mx-auto w-full max-w-6xl pb-10">
-            <header className="mb-5 flex items-end justify-between gap-3 px-1">
-                <div>
-                    <p className="text-footnote font-semibold uppercase tracking-wide text-label2">{fmt(new Date(), 'EEEE, d. MMMM')}</p>
-                    <h1 className="text-large font-bold">{greeting()}, {user.username}</h1>
-                </div>
-                <button onClick={() => setEdit(true)} className="press mb-1 text-body text-accent">Anpassen</button>
-            </header>
+            <Hero onEdit={() => setEdit(true)} />
 
             <div className="grid gap-4 lg:grid-cols-2 lg:[&>*:only-child]:col-span-2">
                 {enabled.includes('weather') && <WeatherWidget />}

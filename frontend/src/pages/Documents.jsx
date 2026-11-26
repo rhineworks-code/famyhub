@@ -3,6 +3,8 @@ import api, { documentUrl } from '../lib/api';
 import { useApi } from '../lib/useApi';
 import { useAuth } from '../lib/auth';
 import { COLORS, fmtDate } from '../lib/format';
+import PdfView from '../components/PdfView';
+import StorageSettings from '../components/StorageSettings';
 import { Page, Section, Row, Segmented, Chip, IconButton, Button, Sheet, FormGroup, InputRow, ToggleRow, SearchField, ColorPicker, Check, Toggle, Empty, Loading, ErrorNote, Spinner, useFeedback, useAction, cx } from '../ui';
 
 const fileIcon = (name = '') => {
@@ -17,6 +19,7 @@ const DocSheet = ({ doc, open, onClose, categories, tags, onChanged }) => {
     const { user, isAdmin } = useAuth();
     const [f, setF] = React.useState(null);
     const [showText, setShowText] = React.useState(false);
+    const [full, setFull] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
     const { confirm, toast } = useFeedback();
     const act = useAction();
@@ -42,12 +45,18 @@ const DocSheet = ({ doc, open, onClose, categories, tags, onChanged }) => {
     return (
         <Sheet open={open} onClose={onClose} title="Dokument" onSave={save} saving={saving} size="xl">
             <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-                <div className="overflow-hidden rounded-card bg-card">
-                    {isImage(doc.filename)
-                        ? <img src={documentUrl(doc.filename)} alt="" className="max-h-[60vh] w-full object-contain" />
-                        : /\.pdf$/i.test(doc.filename)
-                            ? <iframe src={documentUrl(doc.filename)} title={doc.title} className="h-[60vh] w-full" />
-                            : <div className="flex h-48 items-center justify-center text-label3"><i className="ri-file-text-line text-5xl"></i></div>}
+                <div className="min-w-0">
+                    <div className="relative max-h-[60vh] overflow-auto rounded-card bg-fill/12 p-2">
+                        {isImage(doc.filename)
+                            ? <img src={documentUrl(doc.filename)} alt="" className="mx-auto max-h-[56vh] rounded-md object-contain" />
+                            : /\.pdf$/i.test(doc.filename)
+                                ? <PdfView url={documentUrl(doc.filename)} />
+                                : <div className="flex h-48 flex-col items-center justify-center gap-2 text-sub text-label2"><i className="ri-file-text-line text-5xl text-label3"></i>Keine Vorschau möglich</div>}
+                    </div>
+                    <div className="mt-2 flex justify-center gap-4">
+                        <button type="button" onClick={() => setFull(true)} className="press text-footnote font-medium text-accent"><i className="ri-fullscreen-line"></i> Vollbild</button>
+                        <a href={documentUrl(doc.filename)} target="_blank" rel="noopener noreferrer" className="press text-footnote font-medium text-accent"><i className="ri-external-link-line"></i> In neuem Tab öffnen</a>
+                    </div>
                 </div>
                 <div className="space-y-5">
                     <FormGroup>
@@ -85,6 +94,20 @@ const DocSheet = ({ doc, open, onClose, categories, tags, onChanged }) => {
                     )}
                 </div>
             </div>
+            {full && (
+                <div className="anim-fade fixed inset-0 z-[320] flex flex-col bg-black" role="dialog" aria-modal="true" aria-label={doc.title}>
+                    <div className="safe-top flex items-center gap-3 px-3 py-2 text-white">
+                        <button onClick={() => setFull(false)} className="press px-2 py-1 text-body">Fertig</button>
+                        <span className="min-w-0 flex-1 truncate text-center text-sub">{doc.title}</span>
+                        <a href={documentUrl(doc.filename, true)} className="press p-2 text-xl" aria-label="Herunterladen"><i className="ri-download-2-line"></i></a>
+                    </div>
+                    <div className="flex-1 overflow-auto px-2 pb-[env(safe-area-inset-bottom)]">
+                        <div className="mx-auto max-w-4xl">
+                            {isImage(doc.filename) ? <img src={documentUrl(doc.filename)} alt="" className="mx-auto max-w-full" /> : <PdfView url={documentUrl(doc.filename)} />}
+                        </div>
+                    </div>
+                </div>
+            )}
         </Sheet>
     );
 };
@@ -130,6 +153,8 @@ export default function Documents() {
     const [tag, setTag] = React.useState(null);
     const [open, setOpen] = React.useState(null);
     const [labels, setLabels] = React.useState(false);
+    const [storage, setStorage] = React.useState(false);
+    const { user: me } = useAuth();
     const [uploading, setUploading] = React.useState(0);
     const [shareNew, setShareNew] = React.useState(() => localStorage.getItem('fh_doc_share') !== '0');
     const [selecting, setSelecting] = React.useState(false);
@@ -171,6 +196,7 @@ export default function Documents() {
 
     return (
         <Page wide title="Dokumente" actions={<>
+            {me.is_system_admin && <IconButton icon="ri-server-line" label="Speicherort" variant="gray" onClick={() => setStorage(true)} />}
             <IconButton icon="ri-price-tag-3-line" label="Kategorien & Tags" variant="gray" onClick={() => setLabels(true)} />
             <IconButton icon={uploading ? 'ri-loader-4-line animate-spin' : 'ri-upload-2-line'} label="Hochladen" variant="filled" disabled={!!uploading} onClick={() => fileRef.current?.click()} />
         </>}>
@@ -217,6 +243,7 @@ export default function Documents() {
                 </div>
             )}
             <DocSheet doc={open} open={!!open} onClose={() => setOpen(null)} categories={categories} tags={tags} onChanged={reload} />
+            <Sheet open={storage} onClose={() => setStorage(false)} title="Speicherort"><StorageSettings onSaved={reload} /></Sheet>
             <LabelsSheet open={labels} onClose={() => setLabels(false)} categories={categories} tags={tags} onChanged={() => { reloadCats(); reloadTags(); reload(); }} />
         </Page>
     );

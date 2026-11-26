@@ -39,7 +39,7 @@ export const greeting = () => {
     const h = new Date().getHours();
     if (h < 5) return 'Gute Nacht';
     if (h < 11) return 'Guten Morgen';
-    if (h < 17) return 'Hallo';
+    if (h < 17) return 'Guten Tag';
     if (h < 22) return 'Guten Abend';
     return 'Gute Nacht';
 };

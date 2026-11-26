@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   FamyHub – iOS-inspired look
+   Brand: navy #2B3E6A (primary) · sky #1AA7EC (accent)
+   Neutrals come from the iOS gray scale defined in tailwind.config.js.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-black dark:bg-slate-950 dark:text-white antialiased font-sans;
+    letter-spacing: -0.011em;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.022em;
+  }
+
+  /* Form fields: iOS style – soft fill, no heavy outline, brand focus ring */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  select,
+  textarea {
+    @apply rounded-[10px] border border-black/[0.08] bg-white text-black transition-shadow dark:bg-slate-800 dark:text-white dark:border-white/10 !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  select:focus,
+  textarea:focus {
+    @apply outline-none border-brand-light ring-4 ring-brand-light/20 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-slate-400;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: #2B3E6A;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Typography tuning for the existing markup: the old design used extra-black
+   weights and tiny, widely spaced uppercase labels everywhere. These rules
+   calm that down to iOS proportions without touching every component.
+   -------------------------------------------------------------------------- */
+@layer utilities {
+  .font-black { font-weight: 700; }
+  .font-extrabold { font-weight: 700; }
+  .font-bold { font-weight: 600; }
+  .tracking-widest { letter-spacing: 0.02em; }
+  .tracking-wider { letter-spacing: 0.015em; }
+  .tracking-\[0\.2em\] { letter-spacing: 0.03em; }
+  .text-\[8px\] { font-size: 10px; }
+  .text-\[9px\] { font-size: 10.5px; }
+  .text-\[10px\] { font-size: 11px; }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-black/[0.06] dark:border-white/10;
+  }
+
+  .premium-card,
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-[1.25rem] border-0 shadow-sm p-6;
+  }
+
+  .ios-group {
+    @apply bg-white dark:bg-slate-800 rounded-[14px] overflow-hidden divide-y divide-black/[0.06] dark:divide-white/10;
+  }
+}
+
+/* Dark mode: white cards / panels that were never given a dark variant */
+.dark .bg-white:not([class*="dark:bg-"]) {
+  background-color: #1C1C1E;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, 0.15); border-radius: 9999px; }
+.dark ::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.18); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+.pb-safe { padding-bottom: var(--safe-area-inset-bottom); }
+
+/* Bottom sheet */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-up { animation: sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1); }
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.animate-bounce-subtle { animation: bounce-subtle 3s ease-in-out infinite; }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+.animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+
+@keyframes page-spread {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+.animate-page-entry-spread { animation: page-spread 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-up, .animate-bounce-subtle, .animate-pulse-slow, .animate-page-entry-spread { animation: none; }
+}
+
+/* Chat scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(43, 62, 106, 0.15); border-radius: 10px; }
+
+/* React Grid Layout (dashboard widgets) */
+.react-grid-layout { position: relative; transition: height 200ms ease; }
+.react-grid-item { transition: all 200ms ease; transition-property: left, top; }
+.react-grid-item.resizing { z-index: 1000; will-change: width, height; }
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 1000;
+  will-change: left, top;
+  @apply shadow-2xl scale-[1.02];
+}
+.react-grid-item.dropping { visibility: hidden; }
+.react-grid-placeholder {
+  @apply bg-brand-light/10 border-2 border-dashed border-brand-light/40 rounded-[1.25rem] transition-opacity duration-200;
+  z-index: 1;
+}
+.react-resizable-handle {
+  @apply absolute w-8 h-8 bottom-2 right-2 cursor-nwse-resize z-[60] flex items-center justify-center opacity-0 transition-opacity;
+}
+.react-grid-item:hover .react-resizable-handle { @apply opacity-100; }
+.react-resizable-handle::after {
+  content: "";
+  @apply w-3 h-3 border-r-2 border-b-2 border-slate-400 rounded-br-sm;
+}

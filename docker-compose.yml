@@ -1,0 +1,17 @@
+services:
+  famyhub:
+    build: .
+    image: famyhub:latest
+    restart: unless-stopped
+    ports:
+      # Port auf dem Server: FAMYHUB_PORT in der .env setzen (Standard 3265)
+      - "${FAMYHUB_PORT:-3265}:3265"
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./data:/app/data        # SQLite-Datenbank + JWT-Schlüssel
+      - ./uploads:/app/uploads  # Fotos, Avatare, Dokumente
+    # Eigene Anpassungen (z. B. "user:", weitere Volumes) gehören in eine
+    # docker-compose.override.yml – die wird von Git ignoriert und bei Updates nicht überschrieben.
